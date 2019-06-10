@@ -185,10 +185,6 @@ function getCircleOfThirds(note) {
     return featuresTensor;
   }
 
-    let chord = [1,0,0,0,1,0,0,1,0,0,1,0];
-    let chords = new Array(17).fill(chord);
-    let notes = new Array(17).fill(1);
-    let times = new Array(17).fill(7);
 
     async function getPrediction(input) {
       if (!modelLoaded) {
@@ -213,12 +209,21 @@ function getCircleOfThirds(note) {
       for (const [i,elt] of pitems.entries()) { pitems[i][1] = elt[1]/psum;}
 
 
+      let ditems = [];
+      for (const [i, elt] of duration.entries()){ditems.push([i, elt]);}
+      ditems.sort(function(first, second) {return second[1] - first[1];});
+
+      ditems = ditems.slice(0,5);
+      let dsum = 0;
+      for (const elt of ditems) { dsum += elt[1]; }
+      for (const [i,elt] of ditems.entries()) { ditems[i][1] = elt[1]/dsum;}
+
       let r1 = Math.random();
       let r2 = Math.random();
       let s1 = 0;
       let i1 = 0;
       while(s1 < r1){
-          s1 += duration[i1];
+          s1 += ditems[i1][1];
           i1 += 1;
       }
       let s2 = 0;
@@ -227,11 +232,12 @@ function getCircleOfThirds(note) {
           s2 += pitems[i2][1];
           i2 += 1;
       }
-      const duration_sampled = i1-1;
+      const duration_i = i1-1;
       const pitch_i= i2-1;
       const sampled_pitch = pitems[pitch_i][0];
+      const sampled_duration = ditems[duration_i][0];
 
-    return [sampled_pitch, duration_sampled];
+    return [sampled_pitch, sampled_duration];
     }
 
     //let input = getFeatureVectors(notes, times, chords);
@@ -249,20 +255,37 @@ function getCircleOfThirds(note) {
         let notes = [];
         let times = [];
         let oldtime = 0;
+        let skip = false;
         for (let elt of inputmelody){
             if (elt[1] < oldtime){//current begins before last ends
                 if (elt[2] < oldtime){//current begins and ends before last ends
-                    continue;
-                } else {//begin of current until end of last
-                    notes.push(elt[0]-LOW);
-                    times.push(time_to_tick(elt[2]-oldtime));
+                    skip = true;
+                } else {//end of last until end of current
+                    time = time_to_tick(elt[2]-oldtime)-1;
+                    oldtime = elt[2];
                 }
             } else {//begin of current until end of current
-                notes.push(elt[0]-LOW);
-                times.push(time_to_tick(elt[2]-elt[1]));
+                time = time_to_tick(elt[2]-elt[1])-1;
                 oldtime = elt[2];
             }
+            if (!skip){
+                notes.push(elt[0]-LOW);
+                times.push(Math.min(time,TIMES-1));
+                time = time-(TIMES-1);
+                if (time>0){
+                    while(time>TIMES-1){
+                        notes.push(elt[0]-LOW);
+                        times.push(TIMES-1);
+                        time = time-(TIMES-1);
+                    }
+                    if (time>0){
+                        notes.push(elt[0]-LOW);
+                        times.push(time);
+                    }
+                }
+            }
         }
+        console.log(notes,times);
         return [notes, times];
     }
     function getCindyMelody(notes, times){
@@ -306,12 +329,7 @@ function getCircleOfThirds(note) {
         timesnew = notesAndDurations[1].slice(-mel_len);
         chordsnew = chords;
 
-        //cut timesarray SCHLAMPIG!
-        for (const [i,time] of timesnew.entries()){
-            if ( time > TIMES){
-                timesnew[i] = TIMES-1;
-            }
-        }
+
 
         //padding Test
         while (notesnew.length < mel_len){

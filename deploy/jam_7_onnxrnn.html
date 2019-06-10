@@ -66,7 +66,7 @@ if(on & beatcounted == 0
     beatcounted = beatcounted + 1;
     secs = seconds();
     beat = mod(beat,16) + 1;
-    if(mod(beat,2)==1,if(beat < 9,playmelody([["ppp"],[["C","E","G"],1]]);,playmelody([["ppp"],[["C","F","A"],1]]);););
+    if(mod(beat,2)==1,if(beat < 9,playmelody([["ppp"],[["C","E","G"],1]],instrument->1);,playmelody([["ppp"],[["C","F","A"],1]]);););
     if(beat == 1,
         if(response == 0,
             response = 1;
@@ -77,13 +77,13 @@ if(on & beatcounted == 0
                 continueSequence(
                     inputmelody,
                     melody = m;
-                    playmelody(melody);
+                    playmelody(melody,channel->2,instrument->26);
                 );
                 inputmelody=[];
             );
         );
     );
-    //print(seconds()-secs); //~0.07-0.1 verzoegerung UPDATE: ~0.03 verzoegerung
+    print(seconds()-secs); //~0.07-0.1 verzoegerung UPDATE: ~0.03 verzoegerung
 );
 
 
