@@ -37,9 +37,18 @@
 </script>
 
 <script id="csdraw" type="text/x-cindyscript">
-bpm=120;
-drawtext((1.5,1.6),"bpm: " + bpm, size->20);
-drawtext((1.5,1.5),"beat: " + beat, size->20);
+
+
+if(inited==1,
+    drawtext((1.4,text),floor(floor((beat-1)/4)+1), size->25);
+    drawtext((1.4,text-0.1),"bar", size->15);
+    drawtext((1.6,text),floor(mod(beat-1,4)+1), size->25);
+    drawtext((1.6,text-0.1),"beat", size->15);
+    drawtext((1.8,text),bpm, size->25);
+    drawtext((1.8,text-0.1),"Tempo(bpm)", size->15);
+
+    drawtext((-0.7,0.5),if(response == 0,"Computer Responding for 4 bars.","Reading 4 bars Piano Input..."), size->25);
+);
 
 timestep = bpm/60*(seconds() - timer);
 
@@ -50,22 +59,36 @@ if(beatcounted > 0,
     );
 );
 
-if(beatcounted == 0
+
+//makesound
+if(on & beatcounted == 0
     & timestep - floor(timestep) <= 0.05,
-    secs = seconds();
-    beat = mod(beat,8) + 1;
     beatcounted = beatcounted + 1;
-    if(beat == 8 & inputmelody != [],
-        continueSequence(
-            inputmelody,
-            melody = m;
-            errc(melody);
-            playmelody(melody);
+    secs = seconds();
+    beat = mod(beat,16) + 1;
+    if(mod(beat,2)==1,if(beat < 9,playmelody([["ppp"],[["C","E","G"],1]]);,playmelody([["ppp"],[["C","F","A"],1]]);););
+    if(beat == 1,
+        if(response == 0,
+            response = 1;
+            inited =1;
+        ,//else
+            response = 0;
+            if(inputmelody != [],
+                continueSequence(
+                    inputmelody,
+                    melody = m;
+                    playmelody(melody);
+                );
+                inputmelody=[];
+            );
         );
-        inputmelody=[];
     );
-    //print(seconds()-secs); ~0.07-0.1 verzoegerung
+    //print(seconds()-secs); //~0.07-0.1 verzoegerung UPDATE: ~0.03 verzoegerung
 );
+
+
+///////////////
+//UX
 
 forall(1..30,
     if(keyson_#==1,
@@ -81,17 +104,31 @@ forall(1..30,
 ls=alllines();
 apply(ls,l,l.selected=false);
 
-if(German.pressed,
 
-keys=["A","W","S","E","D","F","T","G","Z","H","U","J","K","O","L","P","º","Þ","Ý","Ü",
-    "Y","X","C","V","B","N","M","¼","¾","¿";];
-    drawtext((-0.9,0.4),"W E    T Z U   O P",size->41);
-    drawtext((-1,0),"A S D F G H J K L Ö Ä",size->40);,
 
-keys=["A","W","S","E","D","F","T","G","Y","H","U","J","K","O","L","P","º","Þ","Ý","Ü",
-    "Z","X","C","V","B","N","M","¼","¾","¿";];//23+10
-    drawtext((-0.9,0.4),"W E    T Y U   O P",size->41);
-    drawtext((-1,0),"A S D F G H J K L Ö Ä",size->40);
+
+if(help,
+    drawtext((-2,text+0.1),"Press play to start. ", size->20);
+    drawtext((-2,text),"Use Computer Keyboard ", size->20);
+    drawtext((-2,text-0.1),"to play the piano.", size->20);
+    drawtext((-2,text-0.2),"Keyboard mapping:", size->20);
+
+
+
+    if(German.pressed,
+
+    keys=["A","W","S","E","D","F","T","G","Z","H","U","J","K","O","L","P","º","Þ","Ý","Ü",
+        "Y","X","C","V","B","N","M","¼","¾","¿";];
+        drawtext((-1.95,text-0.4),"W E    T Z U   O P",size->21);
+        drawtext((-2,text-0.5),"A S D F G H J K L Ö Ä",size->20);,
+
+    keys=["A","W","S","E","D","F","T","G","Y","H","U","J","K","O","L","P","º","Þ","Ý","Ü",
+        "Z","X","C","V","B","N","M","¼","¾","¿";];//23+10
+        drawtext((-1.95,text-0.4),"W E    T Y U   O P",size->21);
+        drawtext((-2,text-0.5),"A S D F G H J K L Ö Ä",size->20);
+    );
+    ,//else
+    drawtext((-1.9,text),"Help?",size->20);
 );
 
 keypos(n) := (
@@ -117,9 +154,9 @@ drawkeyw(n) := (
     if(!contains(blackkeys,mod(n,12)),
         octave = floor(n/12);
         keynr = keypos(mod(n,12)+1);
-        pos = (octave*7+keynr)/3-2.8;
+        pos = (octave*7+keynr)/3-hoffset;
         if (keyson_n == 1, c = .5;, c = .3;);
-        kh = -0.5;
+        kh = voffset;
         w = 0.3;
         l = 1;
         fillpoly(((pos-w,kh),(pos,kh),(pos,kh-l),(pos-w,kh-l)),color->[1,1,1]*c);
@@ -130,23 +167,21 @@ drawkeyb(n) := (
     if(contains(blackkeys, mod(n,12)),
         octave = floor(n/12);
         keynr = keypos(mod(n,12));
-        pos = ((octave*7+keynr)+0.35)/3-2.8;
+        pos = ((octave*7+keynr)+0.35)/3-hoffset;
         if (keyson_n == 1, c = .4;, c = .1;);
-        kh = -0.5;
+        kh = voffset+0.002;
         w = 0.2;
         l = 0.6;
         fillpoly(((pos-w,kh),(pos,kh),(pos,kh-l),(pos-w,kh-l)),color->[1,1,1]*c);
     );
 );
 
-forall(1..30,drawkeyw(#););
-forall(1..30,drawkeyb(#););
+forall(1..numkeys,drawkeyw(#););
+forall(1..numkeys,drawkeyb(#););
 
 ;
 
-
-//call continueSequence here and with callback? get continued sequence.
-//ToDo: function that plays sequence (in sequencer?) maybe use midi for that
+drawimage(speakerPos,if(on,"on","off"),scale->0.15);
 
 </script>
 
@@ -166,6 +201,7 @@ forall(specialkeyslist,
       specialkeyson_#=1;
   );
 );
+
 
 </script>
 
@@ -187,7 +223,8 @@ forall(specialkeyslist,
 
 </script>
 <script id="csmousedown" type="text/x-cindyscript">
-
+if(|mouse().xy,speakerPos|<0.4,on=!on;);
+if(|mouse().xy,helpPos|<0.4,help=!help;);
 ;
 </script>
 <script id="csmousedrag" type="text/x-cindyscript">
@@ -199,8 +236,29 @@ forall(specialkeyslist,
 
 </script>
 <script id="csinit" type="text/x-cindyscript">
+inited=0;
+on=false;
+speakerPos = (0,1.1);
+
+//helptext
+help = false;
+text = 1.5;
+helpPos = (-2,text);
+
+//Keyboard
+hoffset=2;
+voffset=0;
+numkeys=20;
+//init NN
+continueSequence(
+    [[60,1]],
+    melody = m;
+    //playmelody(melody);
+);
+
 playtone(60);
 bpm = 120;
+response = 0;
 beat = 0;
 beatcounted = 0;
 timer = floor(seconds());
@@ -252,6 +310,8 @@ playdampchord(i):=(
     playsin(notes_i*2^(10/12),amp->100*am/notes_i, damp->4, duration->4, line->i+"c", restart->false);
 );
 
+
+
 ;
 </script>
 
@@ -267,16 +327,14 @@ var cdy = CindyJS({
   },
   angleUnit: "°",
   geometry: [
-    {name: "German", type: "ToggleButton", pos: [-1.8,-1.8], color: [0.0, 0.0, 0.0], fillcolor: [1.0, 1.0, 1.0], fillalpha: 1.0, alpha: 0.8999999761581421, text: "German Keyboard!"}
+    {name: "German", type: "ToggleButton", pos: [0,0], color: [0.0, 0.0, 0.0], fillcolor: [1.0, 1.0, 1.0], fillalpha: 1.0, alpha: 0.8999999761581421, text: "German Keyboard!"}
   ],
   autoplay: true,
   keylistener: true,
   use: ["midi","onnxrnn"],
+  images:{on:"common/Pause.png", off:"common/Play.png"},
   ports: [{
     id: "CSCanvas",
-    width: 1920,
-    height: 1440,
-    fill: "window",
     transform: [{visibleRect: [-2,2,2,-2]}],
     background: "rgb(50,50,50)"
   }],

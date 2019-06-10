@@ -118,15 +118,15 @@ let modelLoaded = false;
 
 
 
-function oneHot(idx, arraysize) {
-        if (idx >= arraysize) {
-          console.error("error idx > arraysize")
-          return nada;
-        }
+    function oneHot(idx, arraysize) {
         ar = new Array(arraysize).fill(0);
+        if (idx >= arraysize) {
+          console.error("error idx > arraysize",idx, arraysize);
+          return ar;
+        }
         ar[idx] = 1;
         return ar;
-      }
+    }
 function getCircleOfThirds(note) {
     let circleMajor = x => x%4;
     let circleMinor = x => x%3;
@@ -182,7 +182,6 @@ function getCircleOfThirds(note) {
         features.push(feature);
       }
     const featuresTensor = new tf.tensor2d(features);
-    //console.log(featuresTensor.print());
     return featuresTensor;
   }
 
@@ -193,14 +192,46 @@ function getCircleOfThirds(note) {
 
     async function getPrediction(input) {
       if (!modelLoaded) {
-          model = await tf.loadLayersModel('tfjsmodel/model.json');
+          model = await tf.loadLayersModel('tfjs/model.json');
           modelLoaded = true;
       }
 
       const output = model.predict(input);
-      const pitch = await output[0].argMax(axis=1).data();
-      const duration = await output[1].argMax(axis=1).data();
-    return [pitch[0], duration[0]];
+      //const pitch = await output[0].argMax(axis=1).data();
+      //const duration = await output[1].argMax(axis=1).data();
+      //try sampling
+      const pitch = await output[0].data();
+      const duration = await output[1].data();
+
+      let pitems = [];
+      for (const [i, elt] of pitch.entries()){pitems.push([i, elt]);}
+      pitems.sort(function(first, second) {return second[1] - first[1];});
+
+      pitems = pitems.slice(0,5);
+      let psum = 0;
+      for (const elt of pitems) { psum += elt[1]; }
+      for (const [i,elt] of pitems.entries()) { pitems[i][1] = elt[1]/psum;}
+
+
+      let r1 = Math.random();
+      let r2 = Math.random();
+      let s1 = 0;
+      let i1 = 0;
+      while(s1 < r1){
+          s1 += duration[i1];
+          i1 += 1;
+      }
+      let s2 = 0;
+      let i2 = 0;
+      while(s2 < r2){
+          s2 += pitems[i2][1];
+          i2 += 1;
+      }
+      const duration_sampled = i1-1;
+      const pitch_i= i2-1;
+      const sampled_pitch = pitems[pitch_i][0];
+
+    return [sampled_pitch, duration_sampled];
     }
 
     //let input = getFeatureVectors(notes, times, chords);
@@ -238,7 +269,9 @@ function getCircleOfThirds(note) {
         melody = [];
         currenttick = 0;
         for (let [i,note] of notes.entries()){
-            melody.push([note+LOW, tick_to_time(times[i])]);
+            if (note == MELODY-1) {note = "p"}
+            else { note = note+LOW};
+            melody.push([note, tick_to_time(times[i])]);
         }
         return melody;
     }
@@ -258,17 +291,12 @@ function getCircleOfThirds(note) {
         CHORDS = 12;
 
 
-        console.log(inputmelody);
-
         const notesAndDurations = getNotesAndDurations(inputmelody);
         let chordC = [1,0,0,0,1,0,0,1,0,0,0,0];
         let chordF = [1,0,0,0,0,1,0,0,0,1,0,0];
         let chordsC = new Array(8).fill(chordC);
         let chordsF = new Array(9).fill(chordF);
         let chords = chordsC.concat(chordsF);
-        console.log(chords);
-
-        console.log(notesAndDurations);
 
         let predicted_durations=[];
         let predicted_notes = [];
@@ -278,28 +306,39 @@ function getCircleOfThirds(note) {
         timesnew = notesAndDurations[1].slice(-mel_len);
         chordsnew = chords;
 
+        //cut timesarray SCHLAMPIG!
+        for (const [i,time] of timesnew.entries()){
+            if ( time > TIMES){
+                timesnew[i] = TIMES-1;
+            }
+        }
+
         //padding Test
         while (notesnew.length < mel_len){
-            notesnew.unshift(MELODY-1);
+            notesnew.unshift(12);
             timesnew.unshift(parseInt((TIMES/8-1),10));
         }
 
-        while (predicted_durations.reduce((a,b)=>a+b,0) < 4*TIMES){
+        //predict iteratively
+        let currtime = 0;
+        while (currtime < 4*TIMES){
             let feat = getFeatureVectors(notesnew, timesnew, chordsnew);
             let input = tf.expandDims(feat,0);
             let pred = await getPrediction(input);
             predicted_notes.push(pred[0]);
             predicted_durations.push(pred[1]);
-            notesnew.slice(1).concat(pred[0]);
-            timesnew.slice(1).concat(pred[1]);
+            notesnew = notesnew.slice(1).concat(pred[0]);
+            timesnew = timesnew.slice(1).concat(pred[1]);
+            let currbeat = parseInt((currtime+pred[1])/12,10) - parseInt(currtime/12, 10);
+            chordsnew = chordsnew.slice(currbeat).concat(chordsnew.slice(0,currbeat));
+            currtime += pred[1];
         }
-        const improvisedMelody = getCindyMelody(predicted_notes, predicted_durations);
 
+        const improvisedMelody = getCindyMelody(predicted_notes, predicted_durations);
+        console.log(improvisedMelody);
         cdymelody = wrap(improvisedMelody);
-        console.log(cdymelody);
 
         api.evaluate(recreplace(cdycallback, {'m': cdymelody}));
-
 
         processrunning = false;
     };
