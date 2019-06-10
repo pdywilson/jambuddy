@@ -77,13 +77,20 @@ if(on & beatcounted == 0
                 continueSequence(
                     inputmelody,
                     melody = m;
-                    playmelody(melody,channel->2,instrument->26);
+                    delay = seconds()-secs;
+                    forall(1..length(melody),
+                        rest = min(delay,(melody_#)_2);
+                        print(rest);
+                        (melody_#) = [(melody_#)_1, (melody_#)_2 - rest];
+                        delay = max(0,delay - rest);
+                    );
+                    playmelody(melody,channel->2,instrument->instr);
                 );
                 inputmelody=[];
             );
         );
     );
-    print(seconds()-secs); //~0.07-0.1 verzoegerung UPDATE: ~0.03 verzoegerung
+    //print(seconds()-secs); //~0.07-0.1 verzoegerung UPDATE: ~0.03 verzoegerung
 );
 
 
@@ -245,10 +252,14 @@ help = false;
 text = 1.5;
 helpPos = (-2,text);
 
-//Keyboard
+//DrawKeyboard
 hoffset=2;
 voffset=0;
 numkeys=20;
+
+//Sound
+instr = 1;
+
 //init NN
 continueSequence(
     [[60,1]],
