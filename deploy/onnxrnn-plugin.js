@@ -145,7 +145,7 @@ function getCircleOfThirds(note) {
 
 
 
- function getFeatureVectors(notes, times, chords) {
+ function getFeatureVectors(notes, times, chords, key) {
      encodingDict = {
          'melody': true,
          'melodyModulo': true,
@@ -153,7 +153,8 @@ function getCircleOfThirds(note) {
          'duration': true,
          'durationEncoded': false,
          'chordsNormally': true,
-         'chordsEncoded': false
+         'chordsEncoded': false,
+         'key': true
      }
     features = [];
     for(const [i, note] of notes.slice(0,-1).entries()){
@@ -179,6 +180,7 @@ function getCircleOfThirds(note) {
             feature = feature.concat(chords[i]);
             feature = feature.concat(chords[i+1]);
         }
+        if (encodingDict['key']) feature = feature.concat(oneHot(parseInt(key,10),24));
         features.push(feature);
       }
     const featuresTensor = new tf.tensor2d(features);
@@ -188,7 +190,7 @@ function getCircleOfThirds(note) {
 
     async function getPrediction(input) {
       if (!modelLoaded) {
-          model = await tf.loadLayersModel('tfjs/model.json');
+          model = await tf.loadLayersModel('tfjslmd/model.json');
           modelLoaded = true;
       }
 
@@ -285,7 +287,7 @@ function getCircleOfThirds(note) {
                 }
             }
         }
-        console.log(notes,times);
+        //console.log(notes,times);
         return [notes, times];
     }
     function getCindyMelody(notes, times){
@@ -320,6 +322,7 @@ function getCircleOfThirds(note) {
         let chordsC = new Array(8).fill(chordC);
         let chordsF = new Array(9).fill(chordF);
         let chords = chordsC.concat(chordsF);
+        let key = 0;
 
         let predicted_durations=[];
         let predicted_notes = [];
@@ -340,7 +343,7 @@ function getCircleOfThirds(note) {
         //predict iteratively
         let currtime = 0;
         while (currtime < 4*TIMES){
-            let feat = getFeatureVectors(notesnew, timesnew, chordsnew);
+            let feat = getFeatureVectors(notesnew, timesnew, chordsnew, key);
             let input = tf.expandDims(feat,0);
             let pred = await getPrediction(input);
             predicted_notes.push(pred[0]);
@@ -353,7 +356,7 @@ function getCircleOfThirds(note) {
         }
 
         const improvisedMelody = getCindyMelody(predicted_notes, predicted_durations);
-        console.log(improvisedMelody);
+        console.log("predicted melody", improvisedMelody);
         cdymelody = wrap(improvisedMelody);
 
         api.evaluate(recreplace(cdycallback, {'m': cdymelody}));
