@@ -190,7 +190,7 @@ function getCircleOfThirds(note) {
 
     async function getPrediction(input) {
       if (!modelLoaded) {
-          model = await tf.loadLayersModel('tfjslmd/model.json');
+          model = await tf.loadLayersModel('tfjsack/model.json');
           modelLoaded = true;
       }
 
@@ -326,7 +326,7 @@ function getCircleOfThirds(note) {
 
         let predicted_durations=[];
         let predicted_notes = [];
-        const mel_len = 16+1;
+        const mel_len = 8+1;
 
         notesnew = notesAndDurations[0].slice(-mel_len);
         timesnew = notesAndDurations[1].slice(-mel_len);
