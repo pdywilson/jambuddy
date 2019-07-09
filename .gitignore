@@ -1,0 +1,10 @@
+deploy/soundfonts/
+datasets/
+jazz/
+train/
+test/
+treval/
+training_checkpoints/
+trainoldmids/
+weights/
+preprocessed/
