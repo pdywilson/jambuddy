@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Melodymaker</title>
+    <style type="text/css">
+        * {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        #CSConsole {
+            background-color: #FAFAFA;
+            border-top: 1px solid #333333;
+            bottom: 0px;
+            height: 200px;
+            overflow-y: scroll;
+            position: fixed;
+            width: 100%;
+        }
+    </style>
+
+<script type="text/javascript" src="Cindy.js"></script>
+
+<script id="csdraw" type="text/x-cindyscript">
+
+
+</script>
+
+<script id="cskeydown" type="text/x-cindyscript">
+
+
+</script>
+
+
+<script id="cskeyup" type="text/x-cindyscript">
+
+</script>
+<script id="csmousedown" type="text/x-cindyscript">
+chords = ["C", "F"];
+
+generateMelody(chord) := (
+    r = random(1);
+
+);//jump to .js...
+
+playmelody([["ppp"],[melody,1]],instrument->1);
+
+</script>
+<script id="csmousedrag" type="text/x-cindyscript">
+
+
+;
+</script>
+<script id="csmouseup" type="text/x-cindyscript">
+
+</script>
+<script id="csinit" type="text/x-cindyscript">
+
+
+
+
+//notes
+f(n) := 2^((n-49)/12)*440;
+grundton = 39; //52=C but i starts at 1
+repeat(num,i,
+    notes_i=f(i+grundton)
+);
+//grundtoene unten links
+notes_(num+1)=f(grundton-11);
+notes_(num+2)=f(grundton-9);
+notes_(num+3)=f(grundton-7);
+notes_(num+4)=f(grundton-6);
+notes_(num+5)=f(grundton-4);
+notes_(num+6)=f(grundton-2);
+notes_(num+7)=f(grundton);
+notes_(num+8)=f(grundton+1);
+//special:
+notes_(num+9)=f(grundton+21);
+notes_(num+10)=f(grundton+22);
+
+
+am=0.4;
+play(i):=playsin(notes_i,amp->100*am/notes_i, damp->1, duration->4, line->i);
+playdamp(i):=playsin(notes_i,amp->100*am/notes_i, damp->4, duration->4, harmonics->harms, line->i, restart->false);
+playchord(i):=(
+    playsin(notes_i,amp->100*am/notes_i, damp->1, duration->4, line->i+"a");
+    playsin(notes_i*2^(7/12),amp->100*am/notes_i, damp->1, duration->4, line->i+"b");
+    playsin(notes_i*2^(10/12),amp->100*am/notes_i, damp->1, duration->4, line->i+"c");
+);
+playdampchord(i):=(
+    playsin(notes_i,amp->100*am/notes_i, damp->4, duration->4, line->i+"a", restart->false);
+    playsin(notes_i*2^(7/12),amp->100*am/notes_i, damp->4, duration->4, line->i+"b", restart->false);
+    playsin(notes_i*2^(10/12),amp->100*am/notes_i, damp->4, duration->4, line->i+"c", restart->false);
+);
+
+
+
+;
+</script>
+
+    <script type="text/javascript">
+var cdy = CindyJS({
+  scripts: "cs*",
+  defaultAppearance: {
+    dimDependent: 0.7,
+    fontFamily: "sans-serif",
+    lineSize: 1,
+    pointSize: 5.0,
+    textsize: 12.0
+  },
+  angleUnit: "°",
+  geometry: [
+    //{name: "German", type: "ToggleButton", pos: [20,20], color: [0.0, 0.0, 0.0], fillcolor: [1.0, 1.0, 1.0], fillalpha: 1.0, alpha: 0.8999999761581421, text: "German Keyboard!"},
+ ],
+  autoplay: true,
+  keylistener: true,
+  use: ["midi","onnxrnn"],
+  images:{on:"common/Pause.png", off:"common/Play.png"},
+  ports: [{
+     fill: "window",
+    id: "CSCanvas",
+    transform: [{visibleRect: [-2,2,2,-2]}],
+    background: "rgb(50,50,50)"
+  }],
+  cinderella: {build: 1847, version: [2, 9, 1847]}
+});
+    </script>
+</head>
+<body>
+    <div id="CSCanvas"></div>
+
+</body>
+</html>
