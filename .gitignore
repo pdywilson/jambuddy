@@ -1,10 +1,6 @@
-deploy/soundfonts/
 datasets/
-jazz/
-train/
-test/
-treval/
-training_checkpoints/
-trainoldmids/
-weights/
-preprocessed/
+old_notebooks/
+deploy/soundfonts/
+deploy/env/
+deploy/node_modules/
+deploy/tfjs/
