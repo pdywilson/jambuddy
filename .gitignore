@@ -1,6 +1,6 @@
 datasets/
 old_notebooks/
-deploy/soundfonts/
+deploy/common/soundfonts/
 deploy/env/
 deploy/node_modules/
 deploy/tfjs/
