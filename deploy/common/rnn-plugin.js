@@ -242,7 +242,7 @@ CindyJS.registerPlugin(1, "rnn", function(api) {
         // const sampled_duration = ditems[duration_i][0];
 
         const sampled_pitch = pitch[0];
-        const sampled_duration = 16;
+        const sampled_duration = 24;
 
         return [sampled_pitch, sampled_duration];
     }
@@ -315,7 +315,7 @@ CindyJS.registerPlugin(1, "rnn", function(api) {
 
 
     let processrunning = false;
-    async function getMelody(inputmelody, cdycallback) {
+    async function getMelody(inputmelody, bars, cdycallback) {
         if (processrunning) return;
         processrunning = true;
 
@@ -346,7 +346,7 @@ CindyJS.registerPlugin(1, "rnn", function(api) {
 
         //predict iteratively
         let currtime = 0;
-        while (currtime < bars * TIMES) {
+        while (currtime < 2 * bars * TIMES) {
             let feat = getFeatureVectors(notesnew, timesnew, chordsnew, key);
             let input = tf.expandDims(feat, 0);
             let pred = await getPrediction(input);
@@ -359,8 +359,6 @@ CindyJS.registerPlugin(1, "rnn", function(api) {
             currtime += pred[1];
         }
 
-        console.log(predicted_notes);
-        console.log(predicted_durations);
         const improvisedMelody = getCindyMelody(predicted_notes, predicted_durations);
         console.log("predicted melody", improvisedMelody);
         cdymelody = wrap(improvisedMelody);
@@ -372,15 +370,17 @@ CindyJS.registerPlugin(1, "rnn", function(api) {
         processrunning = false;
     };
 
-    api.defineFunction("continueSequence", 2, function(args, modifs) {
+    api.defineFunction("continueSequence", 3, function(args, modifs) {
         if (processrunning) {
             console.log("skip continueSequence, because process is already running");
             return api.nada;
         }
 
         let inputmelody = unwrap(api.evaluate(args[0]));
+        let bars = unwrap(api.evaluate(args[1]));
+        console.log('bars',bars);
 
-        getMelody(inputmelody, cloneExpression(args[1]));
+        getMelody(inputmelody, bars, cloneExpression(args[2]));
         return api.nada;
     });
 });
