@@ -1,4 +1,4 @@
-CindyJS.registerPlugin(1, "rnn", function(api) {
+CindyJS.registerPlugin(1, "rnn1", function(api) {
     //inspired by https://github.com/montaga/montaga.github.io/blob/master/posenet/posenet-plugin.js
     //also adapted from Tero Parviainen's https://codepen.io/teropa/pen/ddqEwj
 
