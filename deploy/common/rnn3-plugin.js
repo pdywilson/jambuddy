@@ -348,17 +348,27 @@ CindyJS.registerPlugin(1, "rnn3", function(api) {
                 return rotate(major,12-ch);
             }
         }
-        let Achord = getChord(chords[0]);
-        let Bchord = getChord(chords[1]);
-        let Achords = new Array(4).fill(Achord);
-        let Bchords = new Array(5).fill(Bchord);
-        let chordsnew = Achords.concat(Bchords);
+        function getChordArray(chords,bars){
+            let A = getChord(chords[0]);
+            let B = getChord(chords[1]);
+            let C = getChord(chords[2]);
+            let D = getChord(chords[3]);
+            let chordsnew = new Array(4).fill(A);
+            if(bars>1) chordsnew = chordsnew.concat(new Array(4).fill(B));
+            if(bars>2) chordsnew = chordsnew.concat(new Array(4).fill(C));
+            if(bars>3) chordsnew = chordsnew.concat(new Array(4).fill(D));
+            chordsnew = chordsnew.concat(chordsnew.slice(-1));
+            return chordsnew;
+        }
 
-        let chordC = [0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0];
-        let chordF = [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0];
-        let chordsC = new Array(4).fill(chordC);
-        let chordsF = new Array(5).fill(chordF);
-        let chordss = chordsC.concat(chordsF);
+        
+        let chordsnew = getChordArray(chords,bars);
+
+        // let chordC = [0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0];
+        // let chordF = [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0];
+        // let chordsC = new Array(4).fill(chordC);
+        // let chordsF = new Array(5).fill(chordF);
+        // let chordss = chordsC.concat(chordsF);
 
         const notesAndDurations = getNotesAndDurations(inputmelody);
         let key = 0;
