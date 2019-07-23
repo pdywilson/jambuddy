@@ -1,7 +1,5 @@
 CindyJS.registerPlugin(1, "rnn3", function(api) {
     //inspired by https://github.com/montaga/montaga.github.io/blob/master/posenet/posenet-plugin.js
-    //also adapted from Tero Parviainen's https://codepen.io/teropa/pen/ddqEwj
-
 
     //CindyJS Helpers
     var cloneExpression = function(obj) {
@@ -111,7 +109,6 @@ CindyJS.registerPlugin(1, "rnn3", function(api) {
 
     // GLOBALS
     let modelLoaded = false;
-    let bars = 2;
     const LOW = 48; // C2=48, C3=60, C4=72, C5=84, C6=96
     const HIGH = 84; //range(48,84) = 36 notes
     const MELODY = 37;
@@ -196,8 +193,12 @@ CindyJS.registerPlugin(1, "rnn3", function(api) {
             model = await tf.loadLayersModel('tfjs/model3/model.json');
             modelLoaded = true;
         }
-
+        
+        let d = new Date();
+        let t = d.getTime();
         const output = model.predict(input);
+        d = new Date();
+        console.log("time",d.getTime()-t);
         const pitch = await output.argMax(axis = 1).data();
         //try sampling
         // const pitch = await output[0].data();
@@ -330,6 +331,8 @@ CindyJS.registerPlugin(1, "rnn3", function(api) {
 
     let processrunning = false;
     async function getMelody(inputmelody, durations, chords, bars, cdycallback) {
+        let d = new Date();
+        let t = d.getTime();
         if (processrunning) return;
         processrunning = true;
 
@@ -412,7 +415,8 @@ CindyJS.registerPlugin(1, "rnn3", function(api) {
         api.evaluate(recreplace(cdycallback, {
             'm': cdymelody
         }));
-
+        d = new Date();
+        console.log("Time: getMelody",d.getTime()-t);
         processrunning = false;
     };
 
@@ -428,8 +432,9 @@ CindyJS.registerPlugin(1, "rnn3", function(api) {
         let bars = unwrap(api.evaluate(args[3]));
         //console.log('durations',durations);
         console.log('inputmelody',inputmelody);
-
+        
         getMelody(inputmelody, durations, chords, bars, cloneExpression(args[4]));
+        
         return api.nada;
     });
 });

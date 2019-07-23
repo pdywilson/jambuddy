@@ -26,9 +26,11 @@
     <!-- Load TensorFlow.js -->
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"> </script>
-    <script src="common/tonal.min.js"></script>
+    <!-- <script src="common/tf.min.js"></script> -->
+    <!-- <script src="common/tonal.min.js"></script> -->
 
 <script id="csdraw" type="text/x-cindyscript">
+//////
 //bars
 Ch = 1.8;
 C.y=Ch;
@@ -43,6 +45,26 @@ bars = round((C.x-1.4)*10);
 C.x = 1.4+bars/10;
 drawtext((C.x-0.3,C.y+0.07),"Trade "+bars+" bars",size->20);
 
+////////////
+//instrument
+D.x = 1.8;
+if(D.y<0.5,D.y=0.5);
+if(D.y>1.2,D.y=1.2);
+draw((D.x,0.5),(D.x,1.2),color->(0,0,0));
+apply(0..7,v,
+    y = 0.5+v*0.1;
+    draw((D.x+0.03,y),(D.x-0.03,y),color->(0,0,0));
+);
+instrum = round((D.y-0.5)*10) + 1;
+D.y = 0.5+(instrum-1)/10;
+drawtext((D.x+0.1,D.y),instrumentnameslist_instrum,size->20);
+instr = instrumentlist_instrum;
+if(instrumentsinited == 0 & instr != firstinstr,
+    loadinstruments(instrumentlist);
+    instrumentsinited = 1;
+);
+
+////////
 //chords
 Ah = 1.7;
 Bh = 1.4;
@@ -104,25 +126,12 @@ drawtext((B2.x,B2.y+0.1),chordnames_B2chord, size->25););
 
 
 
-D.x = 1.8;
-if(D.y<0.5,D.y=0.5);
-if(D.y>1.2,D.y=1.2);
-draw((D.x,0.5),(D.x,1.2),color->(0,0,0));
-apply(0..7,v,
-    y = 0.5+v*0.1;
-    draw((D.x+0.03,y),(D.x-0.03,y),color->(0,0,0));
-);
-instrum = round((D.y-0.5)*10);
-D.y = 0.5+instrum/10;
-drawtext((D.x+0.1,D.y),instrumentnameslist_(instrum+1),size->20);
-instr = instrumentlist_(instrum+1);
-//print(instrumentnames());
 
 
 
 
-/////////
-
+///////////
+//sequencer
 if(inited==1,
     drawtext((1.4,text),floor(floor((beat-1)/4)+1), size->25);
     drawtext((1.4,text-0.1),"bar", size->15);
@@ -141,16 +150,10 @@ if(inited==1,
 timestep = bpm/60*(seconds() - timeatstart);
 
 
-if(beatcounted > 0,
-    beatcounted = beatcounted + 1;
-    if(beatcounted > 5,
-        beatcounted = 0;
-    );
-);
 ////////////
 //makesound
-if(on & beatcounted == 0 & timestep - floor(timestep) <= 0.05,
-    beatcounted = beatcounted + 1;
+if(on & floor(timestep)>timestepfloor,
+    timestepfloor = floor(timestep);
     beat = mod(beat, bars*4) + 1;
     measure = ceil(beat / 4);
 
@@ -425,10 +428,10 @@ getChromaBlack(n):=(
 bpm = 120;
 computersturn = 0;
 beat = 0;
-beatcounted = 0;
 timeatstart = floor(seconds());
 timestep = bpm/60*(seconds() - timeatstart);
 timestepfirstbeat=timestep;
+timestepfloor = floor(timestep);
 
 
 makemusic() := (
@@ -446,7 +449,7 @@ makemusic() := (
         chords,
         bars,
         melody = m;
-        delay = seconds()-secs+0.3;
+        delay = seconds()-secs+0.5;
         print(delay);
         forall(1..length(melody),v,
             if(delay > 0, 
@@ -455,12 +458,16 @@ makemusic() := (
                     delay = 0;,
                     //else delay > melody_v_2
                     delay = delay - melody_v_2;
+                    melody_v_1 = "p";
                     melody_v_2 = 0;
                 );
             );
         );
+        
         print(melody);
-        playmelody(melody,channel->2,instrument->instr,speed->bpm);
+        msecs = seconds();
+        playmelody(melody,instrument->instr,speed->bpm);
+        print("melody delay "+(seconds()-msecs));
     );
     inputmelody=[];
 );
@@ -478,6 +485,10 @@ playtone(60);
 //instruments
 instrumentlist = [1,28,45,74,80,81,99,128];
 instrumentnameslist = ["piano","guitar","strings","flute","ocarina","squarewave","crystal","gunshots"];
+instrumentsinited = 0;
+firstinstr = instrumentlist_1;
+
+
 //27 jazz guitar
 //45 strings
 //74 flute
