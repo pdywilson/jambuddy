@@ -43,7 +43,7 @@ function getChords() {
 
 play = function () {
 	MIDI.loadPlugin({
-		soundfontUrl: "./soundfonts/",
+		soundfontUrl: "/common/soundfonts/",
 		instrument: "acoustic_grand_piano",
 		onprogress: function(state, progress) {
 			console.log(state, progress);
