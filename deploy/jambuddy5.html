@@ -286,13 +286,13 @@ if(on & floor(timestep)>timestepfloor,
     );
     if(rhythm == 2,
         if(mod(beat,4)==1,
-                playmelody([dynamics_instrumb,[getChord(chords_measure)_1,.5]],instrument->instrb,speed->bpm);
+                playmelody([dynamics_instrumb,[getChord(chords_measure)_1,.33]],instrument->instrb,speed->bpm);
         );
         if(mod(beat,4)==2,
-                playmelody([dynamics_instrumb,[getChord(chords_measure),.75],[getChord(chords_measure),.25]],instrument->instrb,speed->bpm);
+                playmelody([dynamics_instrumb,[getChord(chords_measure),.33],["p",.33],[getChord(chords_measure),.33]],instrument->instrb,speed->bpm);
         );
         if(mod(beat,4)==0,
-                playmelody([dynamics_instrumb,[getChord(chords_measure),.25]],instrument->instrb,speed->bpm);
+                playmelody([dynamics_instrumb,[getChord(chords_measure),.33]],instrument->instrb,speed->bpm);
         );
 
     );
@@ -413,7 +413,7 @@ drawimage(speakerPos,if(on,"on","off"),scale->0.15);
 </script>
 
 <script id="cskeydown" type="text/x-cindyscript">
-print(key());
+//print(key());
 
 forall(keylist,
     if(key() == keys_# & keyson_# == 0,
@@ -434,7 +434,7 @@ forall(specialkeyslist,
 */
 
 if(key()==" ",toggleOn(););
-if(key()=="1",visualization=!visualization;);
+//if(key()=="1",visualization=!visualization;);
 </script>
 
 
@@ -507,10 +507,16 @@ use("CindyGL");
 inited=false;
 on=false;
 
+german = false;
+getLanguage(lang = m);
+if(lang == "de-DE",
+    german = true;
+);
+
 //instruments
 instr = 10;
-instrumentlist = [5,1,45,74,80,81,99,128];
-instrumentnameslist = ["e-piano","piano","strings","flute","ocarina","squarewave","crystal","gunshots"];
+instrumentlist = [5,1,45,74,80,81,99,27];
+instrumentnameslist = ["e-piano","piano","strings","flute","ocarina","squarewave","crystal","guitar"];
 instrumentsinited = 0;
 firstinstr = instrumentlist_1;
 
@@ -642,6 +648,7 @@ makemusic() := (
         durationsrel,
         chords,
         bars,
+        beatsperbar,
         melody = m;
         delay = seconds()-secs+0.5;
         print("delay"+delay);
@@ -673,14 +680,7 @@ rhythm = 2;
 settingson = false;
 bpm = 120;
 
-german = false;
-getLanguage(lang = m);
-print(lang);
-print("de-DE");
-print(lang == "de-DE");
-if(lang == "de-DE",
-    german = true;
-);
+
 
 /////////Startconfigurations/////////
 majorminormodes(bool1,bool2,bool3,bool4):=(
@@ -836,7 +836,7 @@ guess(a,n):=(
             animation: {autoplay: true},
             autoplay: true,
             keylistener: true,
-            use: ["midi", "rnn3"],
+            use: ["midi", "rnn5"],
             images: {
                 image: "common/image.png",
                 on: "common/Pause.png",
