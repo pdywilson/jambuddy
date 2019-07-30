@@ -157,7 +157,7 @@ CindyJS.registerPlugin(1, "rnn7", function(api) {
             'key': false
         }
         features = [];
-        for (const [i, note] of notes.slice(0, -1).entries()) {
+        for (const [i, note] of notes.entries()) {
             let feature = [];
             if (encodingDict['melody']) {
                 if (notes[i] < MELODY) { // pitch or pause bit
@@ -178,7 +178,11 @@ CindyJS.registerPlugin(1, "rnn7", function(api) {
             //if (encodingDict['duration']) feature = feature.concat(oneHot(parseInt(times[i], 10), 48));
             if (encodingDict['chordsNormally']) {
                 feature = feature.concat(chords[i]);
-                feature = feature.concat(chords[i + 1]);
+                if (i < notes.length - 1){
+                    feature = feature.concat(chords[i + 1]);
+                } else {
+                    feature = feature.concat(new Array(12).fill(0));
+                }
             }
             if (encodingDict['key']) feature = feature.concat(oneHot(parseInt(key, 10), 24));
             features.push(feature);
@@ -318,6 +322,7 @@ CindyJS.registerPlugin(1, "rnn7", function(api) {
         function getChordArray(chords,bars){
             let chordsnew = [];
             let durationsMap = mapDurations(durations);
+            durationsMap = durationsMap.slice(1);
             for (let elt of durationsMap){
                 chordsnew.push(getChord(chords[elt]));
             }
@@ -341,10 +346,11 @@ CindyJS.registerPlugin(1, "rnn7", function(api) {
 
         //predict iteratively
         let notesnewlength = notesnew.length;
-        for (let i=1; i < notesnewlength; i++) { // i=1 to skip duration 0 "p"
+        for (let i = 0; i < notesnewlength; i++) {
             let feat = getFeatureVectors(notesnew, chordsnew, key);
             let input = tf.expandDims(feat, 0);
             let pred = await getPrediction(input);
+            
             predicted_notes.push(pred[0]);
             notesnew.push(pred[0]);
 

@@ -280,7 +280,6 @@ forall(1..30,
         currentkeys_# = currentkeys_#+1/24;,
         if(currentkeys_#!=0,
             //inputmelody=inputmelody++[[#+59,seconds()-timeatstart,seconds()-timeatstart+currentkeys_#]];
-            inputmelody = inputmelody++[#+59];
             currentkeys_#=0,
         );
     );
@@ -367,6 +366,20 @@ drawimage(speakerPos,if(on,"on","off"),scale->0.15);
 <script id="cstick" type="text/x-cindyscript">
     timestep = bpm/60*(seconds() - timeatstart);
     //print(timestep);
+
+    /////////////
+    //playmelody
+    if(melodystack != [],
+        if(timestep-timestepfirstbeat > melodystack_1_2,
+            playmelody([[melodystack_1_1,melodystack_1_3]],instrument->instr,speed->bpm);
+            melodystacknew = [];
+            forall(2..length(melodystack),v,
+                melodystacknew = melodystacknew ++ [melodystack_v];
+            );
+            melodystack = melodystacknew;
+            //print("melodystack after " + melodystack);
+        );
+    );
     
     ////////////
     //makesound
@@ -421,8 +434,9 @@ drawimage(speakerPos,if(on,"on","off"),scale->0.15);
 forall(keylist,
     if(key() == keys_# & keyson_# == 0,
       play(#);
-      keyson_#=1;
+      inputmelody = inputmelody++[#+59];
       durations = durations ++ timestep - timestepfirstbeat;
+      keyson_#=1;
     );
 );
 
@@ -488,6 +502,7 @@ forall(specialkeyslist,
         );
         play(keynr);
         keyson_keynr=1;
+        inputmelody = inputmelody++[#+59];
         durations = durations ++ timestep - timestepfirstbeat;
             
     );
@@ -645,6 +660,7 @@ makemusic() := (
         durationsrel = durationsrel ++ (durations_(#+1) - durations_#);
     );
     durationsrel = durationsrel ++ durations_1+4*bars - durations_(-1);
+    print("START");
     print("durations "+durations);
     print("durationsrel "+durationsrel);
     continueSequence(
@@ -654,24 +670,35 @@ makemusic() := (
         bars,
         beatsperbar,
         melody = m;
-        delay = seconds()-secs+0.5;
-        print("delay"+delay);
+        
+        melodystack = [];
+        melodyCounter = 0;
         forall(1..length(melody),v,
+            melodystack = melodystack ++ [[melody_v_1, melodyCounter, melody_v_2]];
+            melodyCounter = melodyCounter + melody_v_2;
+        );
+        print(melodystack);
+
+        delay = seconds()-secs;
+        print("delay"+delay);
+
+        forall(1..length(melodystack),v,
             if(delay > 0, 
-                if(delay < melody_v_2,
-                    melody_v_2 = melody_v_2 - delay;
-                    delay = 0;,
-                    //else delay > melody_v_2
-                    delay = delay - melody_v_2;
-                    melody_v_1 = "p";
-                    melody_v_2 = 0;
+                if(delay < melodystack_v_3,
+                    melodystack_v_3 = melodystack_v_3 - delay;
+                    delay = 0;
+                    if(melodystack_v_3 < .1,melodystack_v_1 = "p"; melodystack_v_3 = 0;);,
+                    //else delay > melody_v_3
+                    delay = delay - melodystack_v_3;
+                    melodystack_v_1 = "p";
+                    melodystack_v_3 = 0;
                 );
             );
         );
         
-        print(melody);
-        playmelody(melody,instrument->instr,speed->bpm);
-    );
+        //print(melody);
+        //playmelody(melody,instrument->instr,speed->bpm);
+        );
     inputmelody=[];
 );
 
@@ -714,9 +741,11 @@ C4.xy = (2,1.5);
 
 
 //init NN
-inputmelody=[60,60];
-durations = [0,1];
+inputmelody = [60];
+durations = [0,.1];
+
 makemusic();
+
 
 //init midi.js
 playtone(60);
