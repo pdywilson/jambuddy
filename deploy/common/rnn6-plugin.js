@@ -1,4 +1,4 @@
-CindyJS.registerPlugin(1, "rnn5", function(api) {
+CindyJS.registerPlugin(1, "rnn6", function(api) {
     //inspired by https://github.com/montaga/montaga.github.io/blob/master/posenet/posenet-plugin.js
 
     //CindyJS Helpers
@@ -342,7 +342,7 @@ CindyJS.registerPlugin(1, "rnn5", function(api) {
             predicted_notes.push(pred[0]);
             notesnew.push(pred[0]);
 
-            chordsnew = chordsnew.concat([chordsnew[i]]);
+            chordsnew = chordsnew.concat([chordsnew[0]]);
         }
 
         console.log("predicted notes", predicted_notes);
