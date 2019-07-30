@@ -329,20 +329,26 @@ CindyJS.registerPlugin(1, "rnn6", function(api) {
         let notes = inputmelody.map(elt => elt - LOW);
         
         let key = 0;
+        let max_seq_len = 16; //otherwise too slow
 
-
-        let notesnew = notes;
+        let notesnew = notes.slice(-max_seq_len);
+        console.log('notesnew',notesnew);
+        chordsnew = chordsnew.slice(-max_seq_len);
+        console.log('chordsnew',chordsnew);
+        
+        
         let predicted_notes = [];
 
         //predict iteratively
-        for (let i=1; i < durations.length; i++) {
+        let notesnewlength = notesnew.length;
+        for (let i=1; i < notesnewlength; i++) {
             let feat = getFeatureVectors(notesnew, chordsnew, key);
             let input = tf.expandDims(feat, 0);
             let pred = await getPrediction(input);
             predicted_notes.push(pred[0]);
             notesnew.push(pred[0]);
 
-            chordsnew = chordsnew.concat([chordsnew[0]]);
+            chordsnew = chordsnew.concat([chordsnew[i]]);
         }
 
         console.log("predicted notes", predicted_notes);
