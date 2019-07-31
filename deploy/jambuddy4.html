@@ -547,14 +547,14 @@ forall(specialkeyslist,
 <script id="csmousedown" type="text/x-cindyscript">
     if(|mouse().xy,speakerPos|<0.2,toggleOn(););
     if(inited,
-    if(|mouse().xy,helpPosSymbol|<0.1,help=!help;on=false;settingson=false;);
-    if(|mouse().xy,settingsPos|<0.2,settingson=!settingson;help=false;);
-    if(help & |mouse().xy,germanPosClick|<0.4,german=!german;help=false;);
+        if(|mouse().xy,helpPosSymbol|<0.1,help=!help;on=false;settingson=false;);
+        if(|mouse().xy,settingsPos|<0.2,settingson=!settingson;help=false;);
+        if(help & |mouse().xy,germanPosClick|<0.4,german=!german;help=false;);
 
-    if(|mouse().xy,ch1midpoint|<0.2,ch1mode=!ch1mode;);
-    if(|mouse().xy,ch2midpoint|<0.2,ch2mode=!ch2mode;);
-    if(|mouse().xy,ch3midpoint|<0.2,ch3mode=!ch3mode;);
-    if(|mouse().xy,ch4midpoint|<0.2,ch4mode=!ch4mode;);
+        if(|mouse().xy,ch1midpoint|<0.2,ch1mode=!ch1mode;);
+        if(|mouse().xy,ch2midpoint|<0.2,ch2mode=!ch2mode;);
+        if(|mouse().xy,ch3midpoint|<0.2,ch3mode=!ch3mode;);
+        if(|mouse().xy,ch4midpoint|<0.2,ch4mode=!ch4mode;);
     );
 
     isOnBlackKey(x) := (
@@ -573,9 +573,10 @@ forall(specialkeyslist,
             //for x coord get key nr
             keynr = getChromaWhite(floor((mouse().x + 2)*3) + 1);
         );
+
         play(keynr);
         keyson_keynr=1;
-        inputmelody = inputmelody++[[#+59,measure]];
+        inputmelody = inputmelody++[[keynr+59,measure]];
         durations = durations ++ timestep - timestepfirstbeat;
         predictNextNote();
             
@@ -645,6 +646,7 @@ numkeys=20;
 
 //harmony
 inputmelody = [];
+collectmelody = [];
 melodystack = [];
 durations = [0];
 ch1 = 0;
