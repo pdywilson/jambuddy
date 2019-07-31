@@ -1,4 +1,4 @@
-CindyJS.registerPlugin(1, "rnn9", function(api) {
+CindyJS.registerPlugin(1, "rnn41", function(api) {
     //inspired by https://github.com/montaga/montaga.github.io/blob/master/posenet/posenet-plugin.js
 
     //CindyJS Helpers
@@ -157,7 +157,7 @@ CindyJS.registerPlugin(1, "rnn9", function(api) {
             'key': false
         }
         features = [];
-        for (const [i, note] of notes.entries()) {
+        for (const [i, note] of notes.slice(0, -1).entries()) {
             let feature = [];
             if (encodingDict['melody']) {
                 if (notes[i] < MELODY) { // pitch or pause bit
@@ -178,11 +178,7 @@ CindyJS.registerPlugin(1, "rnn9", function(api) {
             //if (encodingDict['duration']) feature = feature.concat(oneHot(parseInt(times[i], 10), 48));
             if (encodingDict['chordsNormally']) {
                 feature = feature.concat(chords[i]);
-                if (i < notes.length - 1){
-                    feature = feature.concat(chords[i + 1]);
-                } else {
-                    feature = feature.concat(new Array(12).fill(0));
-                }
+                feature = feature.concat(chords[i + 1]);
             }
             if (encodingDict['key']) feature = feature.concat(oneHot(parseInt(key, 10), 24));
             features.push(feature);
@@ -194,7 +190,7 @@ CindyJS.registerPlugin(1, "rnn9", function(api) {
 
     async function getPrediction(input) {
         if (!modelLoaded) {
-            modelfile = 'tfjs/model6/model.json';
+            modelfile = 'tfjs/model4/model.json';
             model = await tf.loadLayersModel(modelfile);
             modelLoaded = true;
             console.log("loaded "+modelfile);
@@ -288,7 +284,7 @@ CindyJS.registerPlugin(1, "rnn9", function(api) {
 
 
     let processrunning = false;
-    async function getMelody(inputmelody, durations, chords, bars, beatsperbar, cdycallback) {
+    async function getMelody(inputmelody, durations, chords, bars, cdycallback) {
         let d = new Date();
         let t = d.getTime();
         if (processrunning) return;
@@ -308,73 +304,68 @@ CindyJS.registerPlugin(1, "rnn9", function(api) {
                 return rotate(major,12-ch);
             }
         }
-        function mapDurations(durations){
-            let currdur = 0;
-            let currbeat = 0;
-            let durationsMapping = [];
-            for (let elt of durations){ //first one at pause, last one would amount to 8
-                durationsMapping.push(currbeat);
-                currdur += elt;
-                currbeat = Math.floor(currdur / beatsperbar);
-            }
-            return durationsMapping;
-        }
         function getChordArray(chords,bars){
-            let chordsnew = [];
-            let durationsMap = mapDurations(durations);
-            durationsMap = durationsMap.slice(1);
-            for (let elt of durationsMap){
-                chordsnew.push(getChord(chords[elt]));
-            }
+            let A = getChord(chords[0]);
+            let B = getChord(chords[1]);
+            let C = getChord(chords[2]);
+            let D = getChord(chords[3]);
+            let chordsnew = new Array(4).fill(A);
+            if(bars>1) chordsnew = chordsnew.concat(new Array(4).fill(B));
+            if(bars>2) chordsnew = chordsnew.concat(new Array(4).fill(C));
+            if(bars>3) chordsnew = chordsnew.concat(new Array(4).fill(D));
+            chordsnew = chordsnew.concat(chordsnew.slice(-1));
             return chordsnew;
         }
-        
+
         let chordsnew = getChordArray(chords,bars);
         
-        let notes = inputmelody.map(elt => elt - LOW);
+        let notes = [];
+        for (let elt of inputmelody) {
+            notes.push(elt-LOW);
+        }
         
         let key = 0;
-        let seq_len = 8; //otherwise too slow
-        let predictionlength = notes.length;
-        console.log(notes.length);
 
-        function padArray(arr, endsize){
-            const fixlength = arr.length;
-            while (arr.length < endsize){
-                for(let i = 0; i < fixlength; i++){
-                    arr.unshift(arr[arr.length - 1 - i]);
-                }
+        let predicted_durations = [];
+        let predicted_notes = [];
+        const mel_len = 8 + 1;
+
+        notesnew = notes.slice(-mel_len);
+
+        console.log('notesnew before',notesnew);
+
+        //padding Test
+        while (notesnew.length < mel_len) {
+            const fixlength = notesnew.length;
+            for(let i = 0; i < fixlength; i++){
+                notesnew.unshift(notesnew[notesnew.length - 1 - i]);
             }
-            return arr.slice(-endsize);
         }
-
-        let notesnew = padArray(notes, seq_len);
         console.log('notesnew',notesnew);
 
-        chordsnew = padArray(chordsnew, seq_len);
-        console.log('chordsnew',chordsnew);
-        
-        
-        let predicted_notes = [];
+        notesnew = notesnew.slice(-mel_len);
+
+        console.log('notesnew after',notesnew);
 
         //predict iteratively
-        for (let i = 0; i < predictionlength; i++) {
-            console.time("predtime");
+        let currtime = 0;
+        let i = 0;
+        while (i < durations.length - 1) {
+            i+=1;
             let feat = getFeatureVectors(notesnew, chordsnew, key);
             let input = tf.expandDims(feat, 0);
             let pred = await getPrediction(input);
-            console.timeEnd("predtime");
-            
             predicted_notes.push(pred[0]);
-            notesnew.push(pred[0]);
-
-            chordsnew = chordsnew.concat([chordsnew[i]]);
+            predicted_durations.push(pred[1]);
+            notesnew = notesnew.slice(1).concat(pred[0]);
+            let currbeat = parseInt((currtime + pred[1]) / 12, 10) - parseInt(currtime / 12, 10);
+            chordsnew = chordsnew.slice(currbeat).concat(chordsnew.slice(0, currbeat));
+            currtime += pred[1];
         }
 
         console.log("predicted notes", predicted_notes);
         const improvisedMelody = getCindyMelodyFixedDurations(predicted_notes, durations);
         //console.log("predicted melody", improvisedMelody);
-
         cdymelody = wrap(improvisedMelody);
 
         api.evaluate(recreplace(cdycallback, {
@@ -385,7 +376,7 @@ CindyJS.registerPlugin(1, "rnn9", function(api) {
         processrunning = false;
     };
 
-    api.defineFunction("continueSequence", 6, function(args, modifs) {
+    api.defineFunction("continueSequence", 5, function(args, modifs) {
         if (processrunning) {
             console.log("skip continueSequence, because process is already running");
             return api.nada;
@@ -395,10 +386,10 @@ CindyJS.registerPlugin(1, "rnn9", function(api) {
         let durations = unwrap(api.evaluate(args[1]));
         let chords = unwrap(api.evaluate(args[2]));
         let bars = unwrap(api.evaluate(args[3]));
-        let beatsperbar = unwrap(api.evaluate(args[4]));
-
+        //console.log('durations',durations);
         console.log('inputmelody',inputmelody);
-        getMelody(inputmelody, durations, chords, bars, beatsperbar, cloneExpression(args[5]));
+        
+        getMelody(inputmelody, durations, chords, bars, cloneExpression(args[4]));
         
         return api.nada;
     });

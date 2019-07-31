@@ -72,33 +72,6 @@ if(visualization & imageready("image"),
     );
 
 
-//////
-//NN initialization
-if(!nninited,
-    drawtext((-.5,1), "Initialization...", color->(.4,.4,.4), size->20);
-    if(nninitcounter > nninitcountermax, nninited = true;);
-
-    if(justpredicted,
-        inputmelody = [60];
-        durations = [0,.1];
-        forall(1..nninitcounter,
-            inputmelody = inputmelody ++ [60];
-            durations = durations ++ [.1];
-        );
-        print(inputmelody);
-        print(durations);
-
-        makemusic();
-
-        justpredicted = false;
-        nninitcounter = nninitcounter + 8;
-    );
-
-
-    
-);
-
-//print(nninited);
 
 //////
 if(settingson,
@@ -297,7 +270,54 @@ if(inited & !help,
 
 );
 
+timestep = bpm/60*(seconds() - timeatstart);
+//print(timestep);
 
+////////////
+//makesound
+if(on & floor(timestep)>timestepfloor,
+    timestepfloor = floor(timestep);
+    beat = mod(beat, bars*beatsperbar) + 1;
+    measure = ceil(beat / beatsperbar);
+
+    if(rhythm == 1,
+        if(mod(beat,2)==1,
+                playmelody([dynamics_instrumb,[getChord(chords_measure),1]],instrument->instrb,speed->bpm););
+    );
+    if(rhythm == 2,
+        if(mod(beat,4)==1,
+                playmelody([dynamics_instrumb,[getChord(chords_measure)_1,.33]],instrument->instrb,speed->bpm);
+        );
+        if(mod(beat,4)==2,
+                playmelody([dynamics_instrumb,[getChord(chords_measure),.33],["p",.33],[getChord(chords_measure),.33]],instrument->instrb,speed->bpm);
+        );
+        if(mod(beat,4)==0,
+                playmelody([dynamics_instrumb,[getChord(chords_measure),.33]],instrument->instrb,speed->bpm);
+        );
+
+    );
+    if(rhythm == 3,
+        if(mod(beat,3)==1,
+                if(rhythm2bool,
+                    playmelody([dynamics_instrumb,[getChord(chords_measure)_1,1],[getChord(chords_measure),1],[getChord(chords_measure),1]],instrument->instrb);
+                    ,//else
+                    playmelody([dynamics_instrumb,[getChord(chords_measure)_1,.5],[getChord(chords_measure)_2,.5],[getChord(chords_measure)_3,1]],instrument->instrb);
+                );
+                rhythm2bool=!rhythm2bool;
+            );
+        
+    );
+
+    if(beat == 1,
+        inited = true;
+        if(inputmelody != [],
+            makemusic(););
+            
+        durations = [0]; 
+        timestepfirstbeat=timestep;
+    );
+    
+);
 
 
 ///////////////
@@ -307,6 +327,7 @@ forall(1..30,
         currentkeys_# = currentkeys_#+1/24;,
         if(currentkeys_#!=0,
             //inputmelody=inputmelody++[[#+59,seconds()-timeatstart,seconds()-timeatstart+currentkeys_#]];
+            inputmelody = inputmelody++[#+59];
             currentkeys_#=0,
         );
     );
@@ -390,70 +411,6 @@ drawimage(speakerPos,if(on,"on","off"),scale->0.15);
 
 
 </script>
-<script id="cstick" type="text/x-cindyscript">
-    timestep = bpm/60*(seconds() - timeatstart);
-    //print(timestep);
-
-    /////////////
-    //playmelody
-    if(nninited & melodystack != [],
-        if(timestep-timestepfirstbeat > melodystack_1_2,
-            playmelody([[melodystack_1_1,melodystack_1_3]],instrument->instr,speed->bpm);
-            melodystacknew = [];
-            forall(2..length(melodystack),v,
-                melodystacknew = melodystacknew ++ [melodystack_v];
-            );
-            melodystack = melodystacknew;
-            //print("melodystack after " + melodystack);
-        );
-    );
-    
-    ////////////
-    //makesound
-    if(on & floor(timestep)>timestepfloor,
-        timestepfloor = floor(timestep);
-        beat = mod(beat, bars*beatsperbar) + 1;
-        measure = ceil(beat / beatsperbar);
-    
-        if(rhythm == 1,
-            if(mod(beat,2)==1,
-                    playmelody([dynamics_instrumb,[getChord(chords_measure),1]],instrument->instrb,speed->bpm););
-        );
-        if(rhythm == 2,
-            if(mod(beat,4)==1,
-                    playmelody([dynamics_instrumb,[getChord(chords_measure)_1,.33]],instrument->instrb,speed->bpm);
-            );
-            if(mod(beat,4)==2,
-                    playmelody([dynamics_instrumb,[getChord(chords_measure),.33],["p",.33],[getChord(chords_measure),.33]],instrument->instrb,speed->bpm);
-            );
-            if(mod(beat,4)==0,
-                    playmelody([dynamics_instrumb,[getChord(chords_measure),.33]],instrument->instrb,speed->bpm);
-            );
-    
-        );
-        if(rhythm == 3,
-            if(mod(beat,3)==1,
-                    if(rhythm2bool,
-                        playmelody([dynamics_instrumb,[getChord(chords_measure)_1,1],[getChord(chords_measure),1],[getChord(chords_measure),1]],instrument->instrb);
-                        ,//else
-                        playmelody([dynamics_instrumb,[getChord(chords_measure)_1,.5],[getChord(chords_measure)_2,.5],[getChord(chords_measure)_3,1]],instrument->instrb);
-                    );
-                    rhythm2bool=!rhythm2bool;
-                );
-            
-        );
-    
-        if(beat == 1,
-            inited = true;
-            if(inputmelody != [],
-                makemusic(););
-                
-            durations = [0]; 
-            timestepfirstbeat=timestep;
-        );
-        
-    );
-</script>
 
 <script id="cskeydown" type="text/x-cindyscript">
 //print(key());
@@ -461,9 +418,8 @@ drawimage(speakerPos,if(on,"on","off"),scale->0.15);
 forall(keylist,
     if(key() == keys_# & keyson_# == 0,
       play(#);
-      inputmelody = inputmelody++[#+59];
-      durations = durations ++ timestep - timestepfirstbeat;
       keyson_#=1;
+      durations = durations ++ timestep - timestepfirstbeat;
     );
 );
 
@@ -529,7 +485,6 @@ forall(specialkeyslist,
         );
         play(keynr);
         keyson_keynr=1;
-        inputmelody = inputmelody++[#+59];
         durations = durations ++ timestep - timestepfirstbeat;
             
     );
@@ -546,14 +501,9 @@ forall(specialkeyslist,
 </script>
 
 
-
 <script id="csinit" type="text/x-cindyscript">
 //fixed globals
 use("CindyGL");
-nninited = false;
-nninitcounter = 0;
-nninitcountermax = 6;
-justpredicted = false;
 inited=false;
 on=false;
 
@@ -691,7 +641,6 @@ makemusic() := (
         durationsrel = durationsrel ++ (durations_(#+1) - durations_#);
     );
     durationsrel = durationsrel ++ durations_1+4*bars - durations_(-1);
-    print("START");
     print("durations "+durations);
     print("durationsrel "+durationsrel);
     continueSequence(
@@ -699,39 +648,25 @@ makemusic() := (
         durationsrel,
         chords,
         bars,
-        beatsperbar,
         melody = m;
-        
-        melodystack = [];
-        melodyCounter = 0;
-        forall(1..length(melody),v,
-            melodystack = melodystack ++ [[melody_v_1, melodyCounter, melody_v_2]];
-            melodyCounter = melodyCounter + melody_v_2;
-        );
-        print(melodystack);
-
-        delay = seconds()-secs;
+        delay = seconds()-secs+0.5;
         print("delay"+delay);
-
-        forall(1..length(melodystack),v,
+        forall(1..length(melody),v,
             if(delay > 0, 
-                if(delay < melodystack_v_3,
-                    melodystack_v_3 = melodystack_v_3 - delay;
-                    delay = 0;
-                    if(melodystack_v_3 < .1,melodystack_v_1 = "p"; melodystack_v_3 = 0;);,
-                    //else delay > melody_v_3
-                    delay = delay - melodystack_v_3;
-                    melodystack_v_1 = "p";
-                    melodystack_v_3 = 0;
+                if(delay < melody_v_2,
+                    melody_v_2 = melody_v_2 - delay;
+                    delay = 0;,
+                    //else delay > melody_v_2
+                    delay = delay - melody_v_2;
+                    melody_v_1 = "p";
+                    melody_v_2 = 0;
                 );
             );
         );
-
-        justpredicted = true;
         
-        //print(melody);
-        //playmelody(melody,instrument->instr,speed->bpm);
-        );
+        print(melody);
+        playmelody(melody,instrument->instr,speed->bpm);
+    );
     inputmelody=[];
 );
 
@@ -774,11 +709,9 @@ C4.xy = (2,1.5);
 
 
 //init NN
-inputmelody = [60];
-durations = [0,.1];
-
+inputmelody=[60,60];
+durations = [0,1];
 makemusic();
-
 
 //init midi.js
 playtone(60);
@@ -902,7 +835,7 @@ guess(a,n):=(
             animation: {autoplay: true},
             autoplay: true,
             keylistener: true,
-            use: ["midi", "rnn9"],
+            use: ["midi", "rnn41"],
             images: {
                 image: "common/image.png",
                 on: "common/Pause.png",
