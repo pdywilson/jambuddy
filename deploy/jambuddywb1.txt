@@ -1,0 +1,1 @@
+timing doesnt work with noteendencoding, predicts length 3 all the time. possibilities: make whole notes until next three. doesnt seem fruitful.

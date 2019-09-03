@@ -1,4 +1,4 @@
-CindyJS.registerPlugin(1, "rnn4", function(api) {
+CindyJS.registerPlugin(1, "rnnwb1", function(api) {
     //inspired by https://github.com/montaga/montaga.github.io/blob/master/posenet/posenet-plugin.js
 
     //CindyJS Helpers
@@ -147,12 +147,12 @@ CindyJS.registerPlugin(1, "rnn4", function(api) {
 
 
 
-    function getFeatureVectors(notes, chords, key) {
+    function getFeatureVectors(notes, durations, chords, key) {
         encodingDict = {
             'melody': true,
             'melodyModulo': true,
             'melodyEncoded': false,
-            'duration': false,
+            'duration': true,
             'durationEncoded': false,
             'chordsNormally': true,
             'chordsEncoded': false,
@@ -177,7 +177,7 @@ CindyJS.registerPlugin(1, "rnn4", function(api) {
                 }
             }
             if (encodingDict['melodyEncoded']) feature = feature.concat(getCircleOfThirds(note));
-            //if (encodingDict['duration']) feature = feature.concat(oneHot(parseInt(times[i], 10), 48));
+            if (encodingDict['duration']) feature = feature.concat(oneHot(parseInt(durations[i], 10), 48));
             if (encodingDict['chordsNormally']) {
                 feature = feature.concat(chords[i]);
                 if (i < notes.length - 1){
@@ -196,7 +196,7 @@ CindyJS.registerPlugin(1, "rnn4", function(api) {
 
     async function getPrediction(input) {
         if (!modelLoaded) {
-            modelfile = 'tfjs/model7/model.json';
+            modelfile = 'tfjs/modelwb1/model.json';
             model = await tf.loadLayersModel(modelfile);
             modelLoaded = true;
             console.log("loaded "+modelfile);
@@ -209,21 +209,27 @@ CindyJS.registerPlugin(1, "rnn4", function(api) {
         // });
 
         const output = model.predict(input);
-        const pitch = await output.argMax(axis = 1).data();
+        const pitch = await output[0].argMax(axis = 1).data();
+        const duration = await output[1].argMax(axis = 1).data();
+        console.log("pitch", pitch);
+        console.log("duration", duration);
         
         const sampled_pitch = pitch[0];
+        const sampled_duration = duration[0];
 
-        return sampled_pitch;
+        return [sampled_pitch, sampled_duration];
     }
 
 
     //HELPERS for getMelody
     function time_to_tick(time) {
-        return parseInt(time * TIMES, 10);
+        //zero indexed
+        return Math.min(parseInt(time * TIMES, 10), TIMES) - 1;
     }
 
     function tick_to_time(tick) {
-        return tick / TIMES;
+        //zero indexed
+        return (tick+1) / TIMES;
     }
 
     const major = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0];
@@ -241,8 +247,9 @@ CindyJS.registerPlugin(1, "rnn4", function(api) {
         }
     }
 
+
     let processrunning = false;
-    async function getMelody(inputmelody, chords, cdycallback) {
+    async function getMelody(inputmelody, durations, chords, cdycallback) {
         if (processrunning) return;
         processrunning = true;
 
@@ -254,14 +261,22 @@ CindyJS.registerPlugin(1, "rnn4", function(api) {
 
         notesnew = notesnew.slice(-max_seq_len);
         chordsnew = chordsnew.slice(-max_seq_len);
+        let durationsnew = durations.map(x => time_to_tick(x));
+        
+        //dummy
+        //let timesnew = new Array(notesnew.length).fill(11);
 
         console.log('notesnew',notesnew);
         console.log('chordsnew',chordsnew);
+        console.log('durationsnew',durationsnew);
 
         console.time("predtime");
-        let feat = getFeatureVectors(notesnew, chordsnew, key);
+        let feat = getFeatureVectors(notesnew, durationsnew, chordsnew, key);
         let input = tf.expandDims(feat, 0);
-        let note = await getPrediction(input);
+        let pred = await getPrediction(input);
+        console.log("pred",pred);
+        let note = pred[0];
+        let dur = tick_to_time(pred[1]);
         console.timeEnd("predtime");
 
         console.log("prednote "+note);  
@@ -272,7 +287,7 @@ CindyJS.registerPlugin(1, "rnn4", function(api) {
             note = note + LOW; // 0 -> 48 C
         };
 
-        let improvisedMelody = [note];
+        let improvisedMelody = [note, dur];
 
         cdymelody = wrap(improvisedMelody);
 
@@ -283,17 +298,29 @@ CindyJS.registerPlugin(1, "rnn4", function(api) {
         processrunning = false;
     };
 
-    api.defineFunction("continueSequence", 3, function(args, modifs) {
+    api.defineFunction("continueSequence", 4, function(args, modifs) {
         if (processrunning) {
             console.log("skip continueSequence, because process is already running");
             return api.nada;
         }
 
         let inputmelody = unwrap(api.evaluate(args[0]));
-        let chords = unwrap(api.evaluate(args[1]));
+        let durations = unwrap(api.evaluate(args[1]));
+        let chords = unwrap(api.evaluate(args[2]));
+
+        //# new noteend list from times
+        let beatpos = 0;
+        let noteends = []
+        for (let dur in durations){
+            beatpos += dur;
+            beatpos = beatpos % 48;
+            noteends.push(beatpos);
+        }
+        
+        durations = noteends;
 
         console.log('inputmelody',inputmelody);
-        getMelody(inputmelody, chords, cloneExpression(args[2]));
+        getMelody(inputmelody, durations, chords, cloneExpression(args[3]));
         
         return api.nada;
     });
