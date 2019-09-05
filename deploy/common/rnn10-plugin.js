@@ -196,7 +196,7 @@ CindyJS.registerPlugin(1, "rnn10", function(api) {
 
     async function getPrediction(input) {
         if (!modelLoaded) {
-            modelfile = 'tfjs/model7/model.json';
+            modelfile = 'tfjs/model8/model.json';
             model = await tf.loadLayersModel(modelfile);
             modelLoaded = true;
             console.log("loaded "+modelfile);
