@@ -3,3 +3,5 @@ deploy/common/soundfonts/
 deploy/env/
 deploy/node_modules/
 deploy/tfjs/
+
+.DS_Store
