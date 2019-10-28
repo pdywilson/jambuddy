@@ -1,6 +1,6 @@
 # LSTM-based melody generation
 
-Test out the application [here](pdywilson.github.io/jambuddy.html).
+Test out the application at [pdywilson.github.io\/jambuddy.html](https://pdywilson.github.io/jambuddy.html).
 
 ## Usage
 
