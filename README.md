@@ -1,10 +1,10 @@
 # LSTM-based melody generation
 
-Test out the application at pdywilson.github.io/jambuddy.html.
+Test out the application at [pdywilson.github.io/jambuddy.html](pdywilson.github.io/jambuddy.html).
 
 ## Usage
 
-The implementation can be found in the Jupyter-Notebook file JamBuddy.ipynb. 
+The implementation can be found in the Jupyter-Notebook file [JamBuddy.ipynb](https://github.com/pdywilson/jambuddy/blob/master/JamBuddy.ipynb). 
 The model is implemented in [Tensorflow Keras](https://www.tensorflow.org/guide/keras). The preprocessing pipeline can convert files of the formats MusicXML and MIDI to the encoding.
 
 
