@@ -718,6 +718,7 @@ getChromaWhite(n):=(
     if(n==12,c=20);
     c;
 );
+
 getChromaBlack(n):=(
     if(n==1,c=2);
     if(n==2,c=4);
@@ -731,7 +732,6 @@ getChromaBlack(n):=(
 );
 
 predictNextNote(note) := (
-
     inputmelody = inputmelody ++ [[note, measure]];
     durations = durations ++ timestep - timestepfirstbeat;
     durationsrel = durationsrel ++ durations_(-1) - durations_(-2);
@@ -769,6 +769,7 @@ majorminormodes(bool1,bool2,bool3,bool4):=(
     ch3mode = bool3;
     ch4mode = bool4;
 );
+
 //zelda
 majorminormodes(false,false,true,false);
 C1.xy = (-1,1);

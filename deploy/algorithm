@@ -1,0 +1,68 @@
+
+//sketch_old: for simplicity the calculation of the noteduration is left out here.
+
+inputmelody = []
+
+while(true)
+  if(noteEvent)
+    inputmelody.append(note)
+  if(nextLoop)
+    durations = calculateDurationsFromTimeStamps()
+    playmelody = predict(inputmelody,durations,harmony)
+    play(playmelody)
+    inputmelody = []
+    nextLoop = false
+
+
+//pitchonly: 
+
+inputmelody = []
+collectmelody = []
+
+while(true)
+  if(noteEvent)
+    inputmelody.append([note,curr_harmony])
+    prediction = predict(inputmelody)
+    collectmelody.append(prediction)
+  if(nextLoop)
+    playmelody = collectmelody
+    inputmelody = [] //idea: dont empty this? or make collectmelody to inputmelody
+    collectmelody = []
+  
+
+new2:
+
+inputmelody = []
+lastdurations = []
+durations = []
+collectmelody = []
+
+while(true)
+  if(noteEvent)
+    durations.append(curr_tick)
+    inputmelody.append([note,curr_harmony])
+    predictedNote, predictedDuration = predict(inputmelody,durations)
+    collectmelody.append(predictedNote)
+    collectdurations.append(predictedDuration)
+  if(nextLoop)
+    play(collectmelody,collectdurations)
+    inputmelody = [] //idea: dont empty this? or make collectmelody to inputmelody
+    collectmelody = []
+    lastdurations = durations
+    durations = []
+
+new3:
+
+inputmelody = []
+collectmelody = []
+
+while(true)
+  if(noteEvent)
+    inputmelody.append(note)
+    predictedNote, predictedDuration = predict(inputmelody)
+    collectmelody.append(predictedNote)
+    collectdurations.append(predictedDuration)
+  if(nextLoop)
+    play(collectmelody,collectdurations)
+    inputmelody = [] 
+    collectmelody = []

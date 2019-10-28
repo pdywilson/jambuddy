@@ -457,7 +457,7 @@ if(!nninited,
     
         );
         if(rhythm == 3,
-            if(mod(beat,3)==1,
+            if(mod(beat,3) == 1,
                     if(rhythm2bool,
                         playmelody([dynamics_instrumb,[getChord(chords_measure)_1,1],[getChord(chords_measure),1],[getChord(chords_measure),1]],instrument->instrb);
                         ,//else
@@ -471,7 +471,7 @@ if(!nninited,
         //make AI sound
         if(beat == 1,
             inited = true;
-            loopcounter=loopcounter+1;
+            loopcounter = loopcounter+1;
             print("START "+loopcounter);
 
             if(loopcounter > 1,

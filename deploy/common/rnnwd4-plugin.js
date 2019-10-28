@@ -147,13 +147,14 @@ CindyJS.registerPlugin(1, "rnnwd4", function(api) {
 
 
 
-    function getFeatureVectors(notes, durations, chords, key) {
+    function getFeatureVectors(notes, durations, chords, chordsroot, key) {
         encodingDict = {
             'melody': true,
             'melodyModulo': true,
             'melodyEncoded': false,
             'duration': true,
             'durationEncoded': false,
+            'chordsRoot': true,
             'chordsNormally': true,
             'chordsEncoded': false,
             'key': false
@@ -178,6 +179,13 @@ CindyJS.registerPlugin(1, "rnnwd4", function(api) {
             }
             if (encodingDict['melodyEncoded']) feature = feature.concat(getCircleOfThirds(note));
             if (encodingDict['duration']) feature = feature.concat(oneHot(parseInt(durations[i], 10), 48));
+            if (encodingDict['chordsRoot']) 
+                feature = feature.concat(chordsroot[i]);
+                if (i < notes.length - 1){
+                    feature = feature.concat(chordsroot[i + 1]);
+                } else {
+                    feature = feature.concat(chordsroot[i]);
+                }
             if (encodingDict['chordsNormally']) {
                 feature = feature.concat(chords[i]);
                 if (i < notes.length - 1){
@@ -196,7 +204,7 @@ CindyJS.registerPlugin(1, "rnnwd4", function(api) {
 
     async function getPrediction(input) {
         if (!modelLoaded) {
-            modelfile = 'tfjs/modelwd1/model.json';
+            modelfile = 'tfjs/model_dur1/model.json';
             model = await tf.loadLayersModel(modelfile);
             modelLoaded = true;
             console.log("loaded "+modelfile);
@@ -246,6 +254,9 @@ CindyJS.registerPlugin(1, "rnnwd4", function(api) {
             return rotate(major,12-ch);
         }
     }
+    function getRoot(ch){
+        return oneHot(ch % 12,12);
+    }
 
 
     let processrunning = false;
@@ -258,20 +269,20 @@ CindyJS.registerPlugin(1, "rnnwd4", function(api) {
         
         let notesnew = inputmelody.map(elt => elt[0] - LOW);
         let chordsnew = inputmelody.map(elt => getChord(chords[elt[1]-1]));
+        let chordsroot = inputmelody.map(elt => getRoot(chords[elt[1]-1]));
 
         notesnew = notesnew.slice(-max_seq_len);
         chordsnew = chordsnew.slice(-max_seq_len);
+        chordsroot = chordsroot.slice(-max_seq_len);
         let durationsnew = durations.map(x => time_to_tick(x));
         
-        //dummy
-        //let timesnew = new Array(notesnew.length).fill(11);
-
         console.log('notesnew',notesnew);
         console.log('chordsnew',chordsnew);
+        console.log('chordsroot',chordsroot);
         console.log('durationsnew',durationsnew);
 
         console.time("predtime");
-        let feat = getFeatureVectors(notesnew, durationsnew, chordsnew, key);
+        let feat = getFeatureVectors(notesnew, durationsnew, chordsnew, chordsroot, key);
         let input = tf.expandDims(feat, 0);
         let pred = await getPrediction(input);
         console.log("pred",pred);
