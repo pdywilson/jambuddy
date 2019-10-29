@@ -5,7 +5,7 @@ Test out the application at [pdywilson.github.io\/jambuddy.html](https://pdywils
 ## Usage
 
 An example implementation of training and evaluation of the model can be found in the Jupyter-Notebook file [JamBuddy.ipynb](https://github.com/pdywilson/jambuddy/blob/master/JamBuddy.ipynb). 
-The model is implemented in [Tensorflow Keras](https://www.tensorflow.org/guide/keras). The preprocessing pipeline can convert files of the formats MusicXML and MIDI to the encoding.
+The model is implemented in [Tensorflow 2.0](https://www.tensorflow.org/guide/keras). The preprocessing pipeline can convert files of the formats MusicXML and MIDI to the encoding.
 
 
 ## Credits
