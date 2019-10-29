@@ -1,6 +1,6 @@
 # LSTM-based monophonic melody generation with harmonic context
 
-Test out the application at [pdywilson.github.io\/jambuddy.html](https://pdywilson.github.io/jambuddy.html).
+Check out the web application at [pdywilson.github.io\/jambuddy.html](https://pdywilson.github.io/jambuddy.html). The web app is created with [CindyJS](https://cindyjs.org/) and Tensorflow.js.
 
 ## Usage
 
