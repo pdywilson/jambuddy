@@ -1,6 +1,6 @@
 # LSTM-based monophonic melody generation with harmonic context
 
-Check out the web application at [pdywilson.github.io\/jambuddy.html](https://pdywilson.github.io/jambuddy.html). The web app is created with [CindyJS](https://cindyjs.org/) and Tensorflow.js. It deploys an LSTM recurrent neural network in an interactive way for melody generation within the harmonic context of an adjustable chord progression.
+Check out the web application at [pdywilson.github.io\/jambuddy.html](https://pdywilson.github.io/jambuddy.html). The web app is created with [CindyJS](https://cindyjs.org/) and [Tensorflow.js](https://www.tensorflow.org/js). It deploys an LSTM recurrent neural network in an interactive way for melody generation within the harmonic context of an adjustable chord progression. For detailed information, see my [Master's Thesis](https://github.com/pdywilson/jambuddy/blob/master/Machine_Learning_Based_Realtime_Melody_Response_Generation_final.pdf).
 
 ## Usage
 
